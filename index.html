@@ -140,8 +140,12 @@
     return snap.exists() ? snap.data().data : {};
   };
 
-  // Avisar que Firebase está listo
-  document.dispatchEvent(new Event('fb-ready'));
+  // Probar conectividad real antes de declarar Firebase listo
+  if (db) {
+    getDoc(doc(db, 'config', 'resultados'))
+      .then(() => { document.dispatchEvent(new Event('fb-ready')); })
+      .catch(() => { /* el timeout en el main script mostrará el error */ });
+  }
 </script>
 
 <style>
@@ -848,7 +852,13 @@ setTimeout(()=>{
     document.getElementById('fbStatus').className='fb-status fb-err';
     document.getElementById('fbStatus').textContent='⚠️ Sin conexión';
   }
-},5000);
+}, 4000);
+setTimeout(()=>{
+  if(!fbReady){
+    document.getElementById('fbStatus').className='fb-status fb-err';
+    document.getElementById('fbStatus').textContent='❌ Sin conexión — modo local';
+  }
+}, 12000);
 
 function saveLocal(){
   state.participante = document.getElementById('participanteInput').value;
@@ -1044,6 +1054,35 @@ function setGrupoScoreHoy(kC,kO,bid,val,otherIsLocal,matchId){
       _autosaveTimers[matchId] = null;
     }
   }, 800);
+}
+
+
+// Guarda selección de penales en Hoy y dispara autosave a Firebase
+async function setPenalHoy(prefix_i, equipo, saveId) {
+  state[`${prefix_i}_pen`] = equipo;
+  state[`${prefix_i}_g`]   = equipo;
+  localStorage.setItem('q2026_local', JSON.stringify(state));
+
+  const statusEl = document.getElementById('save_' + saveId);
+  if (statusEl) statusEl.innerHTML = '<span class="save-status unsaved">🟠 Sin guardar</span>';
+  _savePending = true;
+
+  const nombre = document.getElementById('participanteInput').value.trim();
+  if (!nombre || !fbReady) {
+    if (statusEl) statusEl.innerHTML = '<span class="save-status unsaved">⚠️ Falta nombre o conexión</span>';
+    _savePending = false;
+    return;
+  }
+  try {
+    state = migrateOldKeys(state);
+    state.participante = nombre;
+    await window._fb.guardar(nombre, state);
+    if (statusEl) statusEl.innerHTML = '<span class="save-status saved">✅ Guardado</span>';
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = '<span class="save-status unsaved">⚠️ Error al guardar</span>';
+  } finally {
+    _savePending = false;
+  }
 }
 
 function getBadgeHTML(vL,vV){
@@ -1514,12 +1553,15 @@ async function adminVerHistorial(nombre){
   if(!fbReady) return;
   try {
     const hist = await window._fb.listarHistorial(nombre);
+    // Guardar en memoria para el preview
+    window._histCache = {};
     let html = `<div class="modal-title">Historial · ${nombre}</div>
       <div class="modal-sub">Versiones anteriores guardadas (más reciente primero)</div>`;
     if (!hist.length) {
       html += `<div class="empty-state"><div class="emoji">📭</div><p>No hay versiones anteriores guardadas para ${nombre}.</p></div>`;
     } else {
       hist.forEach((h,i) => {
+        window._histCache[h.id] = h; // cache para preview
         const fecha = h.savedAt?.seconds
           ? new Date(h.savedAt.seconds*1000).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
           : '—';
@@ -1528,10 +1570,16 @@ async function adminVerHistorial(nombre){
         GRUPOS.forEach(g=>g.p.forEach((p,pi)=>{
           if(d[`g${g.l}_${pi}_L`]!==undefined&&d[`g${g.l}_${pi}_L`]!==''&&d[`g${g.l}_${pi}_V`]!==undefined&&d[`g${g.l}_${pi}_V`]!=='') marcadores++;
         }));
-        html += `<div class="q-partido-row" style="justify-content:space-between">
-          <span>🕐 ${fecha}</span>
-          <span style="color:var(--gris);font-size:11px">${marcadores}/72 marcadores · campeón: ${d.campeon||'—'}</span>
-          <button class="btn-ver" onclick="adminRestaurarHistorial('${h.id}','${nombre}')">↩️ Restaurar</button>
+        html += `<div style="background:var(--panel);border:1px solid var(--borde);border-radius:8px;padding:10px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+            <span style="font-weight:700">🕐 ${fecha}</span>
+            <span style="color:var(--gris);font-size:11px">${marcadores}/72 marcadores · campeón: ${d.campeon||'—'}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn-ver" onclick="previewHistorial('${h.id}','${nombre}')">👁 Ver contenido</button>
+            <button class="btn-ver" style="border-color:rgba(0,200,83,.4);color:var(--verde)"
+              onclick="adminRestaurarHistorial('${h.id}','${nombre}')">↩️ Restaurar esta versión</button>
+          </div>
         </div>`;
       });
     }
@@ -1540,6 +1588,83 @@ async function adminVerHistorial(nombre){
   } catch(e) {
     showToast('Error: '+e.message,'error');
   }
+}
+
+// Muestra el contenido completo de una versión del historial
+function previewHistorial(histId, nombre) {
+  const h = window._histCache?.[histId];
+  if (!h) { showToast('No se pudo cargar el preview','error'); return; }
+  const d = migrateOldKeys({...(h.data||{})});
+  const fecha = h.savedAt?.seconds
+    ? new Date(h.savedAt.seconds*1000).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+    : '—';
+
+  let html = `<div style="margin-bottom:12px">
+    <button class="btn-ver" onclick="adminVerHistorial('${nombre}')">← Volver al historial</button>
+  </div>
+  <div class="modal-title">${nombre}</div>
+  <div class="modal-sub">📋 Vista previa · versión del ${fecha}</div>`;
+
+  html += `<div class="q-view-section">
+    <div class="q-view-title">🏆 Campeón elegido</div>
+    <div style="font-size:16px;font-weight:700;color:var(--dorado)">${d.campeon||'—'}</div>
+  </div>
+  <div class="q-view-section">
+    <div class="q-view-title">⚽ Goleador</div>
+    <div style="font-size:14px;font-weight:600">${d.goleador||'—'}</div>
+  </div>`;
+
+  // Grupos
+  html += `<div class="q-view-section"><div class="q-view-title">Fase de Grupos (marcadores)</div>`;
+  let hayGrupos = false;
+  GRUPOS.forEach(g=>{
+    g.p.forEach((p,pi)=>{
+      const vL=d[`g${g.l}_${pi}_L`]??'', vV=d[`g${g.l}_${pi}_V`]??'';
+      if(vL!==''&&vV!==''){
+        hayGrupos = true;
+        const eL=g.e.find(x=>x.n===p.a)||{f:'🌍'};
+        const eV=g.e.find(x=>x.n===p.b)||{f:'🌍'};
+        html+=`<div class="q-partido-row">
+          <span>${eL.f} ${p.a}</span>
+          <span class="q-score">${vL} : ${vV}</span>
+          <span>${p.b} ${eV.f}</span>
+        </div>`;
+      }
+    });
+  });
+  if(!hayGrupos) html += `<div style="color:var(--gris);font-size:12px">Sin marcadores en grupos</div>`;
+  html += `</div>`;
+
+  // Eliminatorias
+  const rondas=[
+    {label:'Dieciseisavos',prefix:'r32',n:16},{label:'Octavos',prefix:'r16',n:8},
+    {label:'Cuartos',prefix:'qf',n:4},{label:'Semis',prefix:'sf',n:2},{label:'Final',prefix:'fin',n:2},
+  ];
+  rondas.forEach(r=>{
+    let bloque='';
+    for(let i=0;i<r.n;i++){
+      const sL=d[`${r.prefix}_${i}_sL`]??'', sV=d[`${r.prefix}_${i}_sV`]??'';
+      const gana=d[`${r.prefix}_${i}_g`]||d[`${r.prefix}_${i}_pen`]||'';
+      if((sL!==''&&sV!=='')||gana){
+        const score=(sL!==''&&sV!=='')?`<span class="q-score">${sL}:${sV}</span>`:'';
+        bloque+=`<div class="q-partido-row" style="justify-content:space-between">
+          <span style="font-size:11px;color:var(--gris)">Partido ${i+1}</span>
+          ${score}
+          ${gana?`<span style="font-size:11px;color:var(--verde)">→ ${gana}</span>`:''}
+        </div>`;
+      }
+    }
+    if(bloque) html+=`<div class="q-view-section"><div class="q-view-title">${r.label}</div>${bloque}</div>`;
+  });
+
+  // Botón restaurar al final del preview
+  html += `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--borde)">
+    <button class="btn btn-green" style="width:100%" onclick="adminRestaurarHistorial('${histId}','${nombre}')">
+      ↩️ Restaurar esta versión
+    </button>
+  </div>`;
+
+  document.getElementById('modalContent').innerHTML = html;
 }
 
 async function adminRestaurarHistorial(histId, nombre){
@@ -2284,6 +2409,21 @@ document.addEventListener('fb-ready', () => {
 // ══════════════════════════════════════════════════════
 function renderHoy() {
   const div = document.getElementById('hoyContent');
+  if (!div) return;
+  try {
+    _renderHoyInternal(div);
+  } catch(e) {
+    console.error('renderHoy error:', e);
+    div.innerHTML = `<div class="empty-state">
+      <div class="emoji">⚠️</div>
+      <p style="font-size:12px">Error cargando partidos de hoy.<br>
+      <span style="color:var(--gris)">${e.message}</span></p>
+      <button class="btn btn-green" onclick="renderHoy()" style="margin-top:12px">🔄 Reintentar</button>
+    </div>`;
+  }
+}
+
+function _renderHoyInternal(div) {
   const now = new Date();
   const hoy = now.toISOString().slice(0,10); // YYYY-MM-DD local... use CDMX
 
@@ -2422,7 +2562,7 @@ function renderHoy() {
             ${isElim ? `<div id="hoy_pen_${saveId}" style="${isTieNow?'':'display:none'}">
               <div style="font-size:10px;color:var(--dorado);font-weight:700;margin-top:4px">🥅 Penales:</div>
               <select class="select-equipo" style="font-size:11px;border-color:rgba(255,214,0,.4);margin-top:3px"
-                onchange="setVal('${p.prefix}_${p.pi}_pen',this.value);setVal('${p.prefix}_${p.pi}_g',this.value)"
+                onchange="setPenalHoy('${p.prefix}_${p.pi}',this.value,'${saveId}')"
                 ${locked?'disabled':''}>${penOptsHoy}</select>
             </div>` : ''}
             <div id="save_${saveId}">
@@ -2441,6 +2581,16 @@ function renderHoy() {
 
   html += '</div>';
   div.innerHTML = html;
+
+  // Restaurar selección de penales en cada partido elim de Hoy
+  div.querySelectorAll('[id^="hoy_pen_"]').forEach(penDiv => {
+    const sel = penDiv.querySelector('select');
+    if (!sel) return;
+    // El id es hoy_pen_<prefix>_<idx>, ej. hoy_pen_r32_0
+    const id = penDiv.id.replace('hoy_pen_','');
+    const saved = state[`${id}_pen`] || state[`${id}_g`] || '';
+    if (saved) sel.value = saved;
+  });
 
   // Start countdown ticker
   clearInterval(window._hoyTimer);
