@@ -234,6 +234,9 @@ header{background:var(--carbon);border-bottom:2px solid var(--verde);padding:14p
 .partido-dt{font-size:10px;color:var(--gris);margin-bottom:5px;letter-spacing:.3px}
 .partido-grupo.locked{opacity:.65;background:rgba(244,67,54,.04)}
 .partido-grupo.locked .score-input{background:#0a0a0a;color:#444;cursor:not-allowed;border-color:#1a1a1a}
+.partido-card.locked{opacity:.65;background:rgba(244,67,54,.04);border-color:rgba(244,67,54,.25)!important}
+.partido-card.locked .score-input{background:#0a0a0a;color:#444;cursor:not-allowed;border-color:#1a1a1a}
+.partido-card.locked .select-equipo{opacity:.5;cursor:not-allowed}
 .resultado-badge{display:inline-block;margin-top:4px;font-size:9px;font-weight:700;
   padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
 .badge-local{background:rgba(0,200,83,.15);color:var(--verde)}
@@ -406,6 +409,64 @@ header{background:var(--carbon);border-bottom:2px solid var(--verde);padding:14p
 .bracket-set{color:var(--verde)}
 .bracket-unset{color:var(--gris)}
 
+/* ── DUELOS / BRACKET VISUAL ── */
+.bv-wrap{overflow-x:auto;padding:0 0 16px;-webkit-overflow-scrolling:touch}
+.bv-header{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--dorado);letter-spacing:1px;margin-bottom:2px}
+.bv-sub{font-size:11px;color:var(--gris);margin-bottom:20px}
+.bv-groups{display:flex;flex-direction:column;gap:32px}
+.bv-group-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.bv-group-label.g1{color:#448aff}
+.bv-group-label.g2{color:var(--verde)}
+
+/* Grid del bracket — 1 fila base = ~22px, 8 partidos r32 × 4 filas c/u = 32 filas */
+.bv-grid{display:grid;grid-template-columns:175px 24px 175px 24px 175px 24px 175px;
+  grid-template-rows:repeat(32,20px);column-gap:0;min-width:max-content}
+.bv-col-title{font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;
+  font-weight:700;text-align:center;align-self:end;padding-bottom:6px;grid-row:1}
+
+/* Cajas de partido */
+.bv-match{background:var(--panel);border:1px solid var(--borde);border-radius:7px;
+  padding:5px 8px;align-self:center;min-width:0}
+.bv-match.bv-done{border-color:rgba(255,255,255,.2)}
+
+/* Equipos */
+.bv-team{display:flex;align-items:center;gap:5px;padding:2px 3px;border-radius:3px;min-width:0}
+.bv-team.bv-loser{opacity:.3;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.4)}
+.bv-team.bv-tbd{opacity:.25;font-style:italic}
+.bv-flag{font-size:13px;flex-shrink:0;line-height:1}
+.bv-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:11px;font-weight:600}
+.bv-score-line{font-size:9px;color:var(--verde);font-weight:700;text-align:center;margin-top:2px}
+.bv-dt-line{font-size:8px;color:var(--gris);text-align:center;margin-top:2px}
+
+/* Líneas conectoras SVG-style con borders */
+.bv-conn{position:relative;align-self:stretch}
+/* Línea vertical derecha (sale del match hacia el connector) */
+.bv-conn-right::after{content:'';position:absolute;right:0;top:50%;width:100%;height:1px;
+  background:var(--borde)}
+/* Bracket ─┐ superior */
+.bv-conn-top::after{content:'';position:absolute;right:0;top:50%;bottom:0;width:1px;
+  background:var(--borde)}
+.bv-conn-top::before{content:'';position:absolute;right:0;top:50%;width:100%;height:1px;
+  background:var(--borde)}
+/* Bracket ─┘ inferior */
+.bv-conn-bot::before{content:'';position:absolute;right:0;top:0;bottom:50%;width:1px;
+  background:var(--borde)}
+.bv-conn-bot::after{content:'';position:absolute;right:0;bottom:50%;width:100%;height:1px;
+  background:var(--borde)}
+/* Línea horizontal al siguiente slot */
+.bv-conn-h{position:relative}
+.bv-conn-h::after{content:'';position:absolute;top:50%;left:0;right:0;height:1px;
+  background:var(--borde)}
+
+/* Final */
+.bv-final-wrap{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.bv-final-col{display:flex;flex-direction:column;gap:10px;min-width:175px}
+.bv-champion{text-align:center;padding:14px;background:rgba(255,214,0,.06);
+  border:1px solid rgba(255,214,0,.3);border-radius:10px}
+.bv-champion-flag{font-size:36px;margin-bottom:4px}
+.bv-champion-name{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--dorado);letter-spacing:1px}
+
 /* ── ADMIN TABS ── */
 .admin-tabs{display:flex;gap:0;border-bottom:1px solid var(--borde);margin-bottom:20px}
 .admin-tab{padding:10px 18px;font-size:12px;font-weight:600;color:var(--gris);cursor:pointer;
@@ -492,6 +553,7 @@ header{background:var(--carbon);border-bottom:2px solid var(--verde);padding:14p
 <!-- ═══════════════════════════════ TABS ═══════════════════════════════ -->
 <div class="tabs">
   <div class="tab active"  onclick="showTab('hoy')">📅 Hoy</div>
+  <div class="tab"         onclick="showTab('bracket')">⚔️ Duelos</div>
   <div class="tab"         onclick="showTab('grupos')">⚽ Grupos</div>
   <div class="tab"         onclick="showTab('dieciseisavos')">Dieciseisavos</div>
   <div class="tab"         onclick="showTab('octavos')">Octavos</div>
@@ -510,6 +572,11 @@ header{background:var(--carbon);border-bottom:2px solid var(--verde);padding:14p
 <!-- HOY -->
 <div id="section-hoy">
   <div id="hoyContent"></div>
+</div>
+
+<!-- BRACKET VISUAL DINÁMICO -->
+<div id="section-bracket" class="section-hidden">
+  <div id="bracketVisualContent"></div>
 </div>
 
 <!-- PODIO PUBLICO -->
@@ -914,18 +981,212 @@ async function cargarDesdeNube(silent=false){
 // ══════════════════════════════════════════════════════
 // TABS
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// BRACKET VISUAL DINÁMICO — alineación tipo torneo real
+// Cada partido de Octavos+ se alinea verticalmente al punto
+// medio exacto de los 2 partidos que lo alimentan (CSS Grid)
+// ══════════════════════════════════════════════════════
+// Bracket helpers
+function bvGetReal(prefix, idx) {
+  return resultadosReales[`${prefix}_${idx}`] || null;
+}
+function bvWinner(prefix, idx, tA, tB) {
+  const r = bvGetReal(prefix, idx);
+  if (!r) return {done:false,winner:null};
+  const gL=parseInt(r.gL??''), gV=parseInt(r.gV??'');
+  if (isNaN(gL)||isNaN(gV)) return {done:false,winner:null};
+  const w = gL!==gV ? (gL>gV?tA:tB) : (r.ganador||null);
+  return {done:!!w,winner:w,gL,gV,isTie:gL===gV};
+}
+function bvRow(nombre, isLoser) {
+  if (!nombre) return `<div class="bv-team bv-tbd"><span class="bv-flag">🌍</span><span class="bv-name">Por definir</span></div>`;
+  return `<div class="bv-team${isLoser?' bv-loser':''}"><span class="bv-flag">${flagFor(nombre)}</span><span class="bv-name">${nombre}</span></div>`;
+}
+function bvCard(prefix, idx, partido, rowStart, rowSpan) {
+  const tA=partido?.a||null, tB=partido?.b||null;
+  const info=bvWinner(prefix,idx,tA,tB);
+  const dt=partido?.dt?fmtDT(partido.dt):'';
+  const bottom=info.done
+    ?`<div class="bv-score-line">${info.gL} – ${info.gV}${info.isTie?' (pen.)':''}</div>`
+    :(dt?`<div class="bv-dt-line">${dt}</div>`:'');
+  return `<div class="bv-match${info.done?' bv-done':''}" style="grid-column:1;grid-row:${rowStart}/span ${rowSpan};align-self:center">
+    ${bvRow(tA, info.done&&info.winner!==tA)}
+    ${bvRow(tB, info.done&&info.winner!==tB)}
+    ${bottom}
+  </div>`;
+}
+// Conectores entre rondas: línea ┐ superior y └ inferior que se unen al centro del partido destino
+function bvConn(topMid, botMid, mid) {
+  return `<div style="grid-column:1;grid-row:${topMid}/${mid};border-right:1px solid rgba(255,255,255,.18);border-bottom:1px solid rgba(255,255,255,.18);border-radius:0 0 5px 0"></div>
+<div style="grid-column:1;grid-row:${mid}/${botMid+1};border-right:1px solid rgba(255,255,255,.18);border-top:1px solid rgba(255,255,255,.18);border-radius:0 5px 0 0"></div>`;
+}
+
+function renderBracketVisual() {
+  const div = document.getElementById('bracketVisualContent');
+  if (!div) return;
+  try {
+    // Cada ronda tiene su propio grid de una sola columna + separador
+    // rowH = 22px por fila. 8 partidos r32 × 4 filas = 32 filas totales por grupo
+    // Cada partido r32 ocupa filas [pos*4+1 .. pos*4+4], centrado en [pos*4+2 .. pos*4+3]
+    // Octavos: centrado entre fila central del par de r32 que lo alimenta
+    // etc.
+
+    // Orden vertical correcto del bracket (según propagación real)
+    const G = [
+      { num:1, label:'🔵 Grupo 1',
+        r32: [1,3,0,2,6,7,4,5],
+        r16: [0,1,2,3], qf:[0,1], sf:[0] },
+      { num:2, label:'🟢 Grupo 2',
+        r32: [8,9,10,11,13,15,12,14],
+        r16: [4,5,6,7], qf:[2,3], sf:[1] },
+    ];
+
+    // Para N partidos en una ronda, la fila central del partido pos (0-based) es:
+    // center(pos, N) = pos*(32/N) + (32/N)/2  (en filas de 1..32)
+    const center = (pos, N) => Math.round(pos*(32/N) + (32/N)/2);
+    const spanOf = (N) => Math.round(32/N);
+
+    let html = `<div style="padding:0 0 16px">
+      <div class="bv-header">⚔️ Duelos</div>
+      <div class="bv-sub">El equipo tachado quedó eliminado · Scroll horizontal para ver todo</div>
+      <div class="bv-groups">`;
+
+    G.forEach(g => {
+      // Build 4 column grids + 3 connector columns
+      // Column structure: [r32|conn|r16|conn|qf|conn|sf]
+      // Each column is a CSS grid with 32 rows of 22px
+
+      const RH = 22; // px per row
+      const ROWS = 32;
+      const COL_W = 162;
+      const CONN_W = 20;
+
+      // Build columns as HTML strings
+      let colR32='', colC1='', colR16='', colC2='', colQF='', colC3='', colSF='';
+
+      // r32
+      g.r32.forEach((idx,pos) => {
+        const s = center(pos,8) - Math.floor(spanOf(8)/2);
+        colR32 += bvCard('r32', idx, BRACKET.r32[idx], s+1, spanOf(8));
+      });
+
+      // connectors r32→r16
+      for (let pair=0; pair<4; pair++) {
+        const topMid = center(pair*2, 8);
+        const botMid = center(pair*2+1, 8);
+        const mid    = center(pair, 4);
+        colC1 += bvConn(topMid, botMid, mid);
+      }
+
+      // r16
+      g.r16.forEach((idx,pos) => {
+        const s = center(pos,4) - Math.floor(spanOf(4)/2);
+        colR16 += bvCard('r16', idx, BRACKET.r16[idx], s+1, spanOf(4));
+      });
+
+      // connectors r16→qf
+      for (let pair=0; pair<2; pair++) {
+        const topMid = center(pair*2, 4);
+        const botMid = center(pair*2+1, 4);
+        const mid    = center(pair, 2);
+        colC2 += bvConn(topMid, botMid, mid);
+      }
+
+      // qf
+      g.qf.forEach((idx,pos) => {
+        const s = center(pos,2) - Math.floor(spanOf(2)/2);
+        colQF += bvCard('qf', idx, BRACKET.qf[idx], s+1, spanOf(2));
+      });
+
+      // connectors qf→sf
+      {
+        const topMid = center(0, 2);
+        const botMid = center(1, 2);
+        const mid    = center(0, 1);
+        colC3 += bvConn(topMid, botMid, mid);
+      }
+
+      // sf
+      g.sf.forEach((idx,pos) => {
+        const s = center(pos,1) - Math.floor(spanOf(1)/2);
+        colSF += bvCard('sf', idx, BRACKET.sf[idx], s+1, spanOf(1));
+      });
+
+      const gridStyle = `display:grid;grid-template-rows:repeat(${ROWS},${RH}px);`;
+
+      html += `<div>
+        <div class="bv-group-label g${g.num}">${g.label}</div>
+        <div style="display:flex;gap:0;min-width:max-content;margin-bottom:4px">
+          <div style="width:${COL_W}px;font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:700;text-align:center">Dieciseisavos</div>
+          <div style="width:${CONN_W}px"></div>
+          <div style="width:${COL_W}px;font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:700;text-align:center">Octavos</div>
+          <div style="width:${CONN_W}px"></div>
+          <div style="width:${COL_W}px;font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:700;text-align:center">Cuartos</div>
+          <div style="width:${CONN_W}px"></div>
+          <div style="width:${COL_W}px;font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:700;text-align:center">Semifinal</div>
+        </div>
+        <div style="display:flex;gap:0;min-width:max-content">
+          <div style="width:${COL_W}px;${gridStyle}">${colR32}</div>
+          <div style="width:${CONN_W}px;${gridStyle}">${colC1}</div>
+          <div style="width:${COL_W}px;${gridStyle}">${colR16}</div>
+          <div style="width:${CONN_W}px;${gridStyle}">${colC2}</div>
+          <div style="width:${COL_W}px;${gridStyle}">${colQF}</div>
+          <div style="width:${CONN_W}px;${gridStyle}">${colC3}</div>
+          <div style="width:${COL_W}px;${gridStyle}">${colSF}</div>
+        </div>
+      </div>`;
+    });
+
+    // Fase final
+    const fi = bvWinner('fin', 1, BRACKET.final[1]?.a, BRACKET.final[1]?.b);
+    const champion = fi.done
+      ? `<div class="bv-champion"><div class="bv-champion-flag">${flagFor(fi.winner)}</div><div class="bv-champion-name">🏆 ${fi.winner}</div></div>`
+      : '';
+
+    html += `<div>
+      <div class="bv-group-label" style="color:var(--dorado)">🏆 Fase Final</div>
+      <div class="bv-final-wrap">
+        <div class="bv-final-col">
+          <div style="font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:700;text-align:center;margin-bottom:4px">3er y 4to Lugar</div>
+          <div class="bv-match${bvWinner('fin',0,BRACKET.final[0]?.a,BRACKET.final[0]?.b).done?' bv-done':''}">
+            ${bvRow(BRACKET.final[0]?.a, bvWinner('fin',0,BRACKET.final[0]?.a,BRACKET.final[0]?.b).done && bvWinner('fin',0,BRACKET.final[0]?.a,BRACKET.final[0]?.b).winner!==BRACKET.final[0]?.a)}
+            ${bvRow(BRACKET.final[0]?.b, bvWinner('fin',0,BRACKET.final[0]?.a,BRACKET.final[0]?.b).done && bvWinner('fin',0,BRACKET.final[0]?.a,BRACKET.final[0]?.b).winner!==BRACKET.final[0]?.b)}
+            ${(()=>{const r=bvGetReal('fin',0);return r&&r.gL!==undefined?`<div class="bv-score-line">${r.gL} – ${r.gV}</div>`:(BRACKET.final[0]?.dt?`<div class="bv-dt-line">${fmtDT(BRACKET.final[0].dt)}</div>`:'');})()}
+          </div>
+        </div>
+        <div class="bv-final-col">
+          <div style="font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:700;text-align:center;margin-bottom:4px">Gran Final</div>
+          <div class="bv-match${fi.done?' bv-done':''}">
+            ${bvRow(BRACKET.final[1]?.a, fi.done&&fi.winner!==BRACKET.final[1]?.a)}
+            ${bvRow(BRACKET.final[1]?.b, fi.done&&fi.winner!==BRACKET.final[1]?.b)}
+            ${fi.done?`<div class="bv-score-line">${fi.gL} – ${fi.gV}${fi.isTie?' (pen.)':''}</div>`:(BRACKET.final[1]?.dt?`<div class="bv-dt-line">${fmtDT(BRACKET.final[1].dt)}</div>`:'')}
+          </div>
+        </div>
+        ${champion}
+      </div>
+    </div>`;
+
+    html += '</div></div>';
+    div.innerHTML = html;
+  } catch(e) {
+    div.innerHTML = `<div class="empty-state"><div class="emoji">⚠️</div><p>Error: ${e.message}</p></div>`;
+    console.error('renderBracketVisual error:', e);
+  }
+}
+
 function showTab(tab){
-  ['hoy','grupos','dieciseisavos','octavos','cuartos','semis','final','podio','admin'].forEach(t=>{
+  ['hoy','bracket','grupos','dieciseisavos','octavos','cuartos','semis','final','podio','admin'].forEach(t=>{
     document.getElementById('section-'+t).classList.toggle('section-hidden', t!==tab);
   });
   document.querySelectorAll('.tab').forEach((el,i)=>{
-    el.classList.toggle('active',['hoy','grupos','dieciseisavos','octavos','cuartos','semis','final','podio','admin'][i]===tab);
+    el.classList.toggle('active',['hoy','bracket','grupos','dieciseisavos','octavos','cuartos','semis','final','podio','admin'][i]===tab);
   });
   if(tab==='admin' && document.getElementById('adminPanel').classList.contains('section-hidden')===false){
     adminCargar();
   }
   if(tab==='hoy') renderHoy();
   if(tab==='podio') renderPodioPublico();
+  if(tab==='bracket') renderBracketVisual();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1233,8 +1494,10 @@ function renderRondaElim(gridId, partidos, prefix) {
       color:${p.g===1?'#448aff':'var(--verde)'}">Grupo ${p.g}</span>` : '';
 
     const card = document.createElement('div');
-    card.className = 'partido-card';
-    card.style.borderColor = p.g ? (p.g===1 ? 'rgba(68,138,255,.2)' : 'rgba(0,200,83,.15)') : '';
+    card.className = 'partido-card' + (locked ? ' locked' : '');
+    if (!locked) {
+      card.style.borderColor = p.g ? (p.g===1 ? 'rgba(68,138,255,.2)' : 'rgba(0,200,83,.15)') : '';
+    }
 
     card.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
@@ -1981,13 +2244,21 @@ function renderResultadosAdmin() {
 
   rondas.forEach(r => {
     html += `<div class="real-grupo"><div class="real-grupo-title">${r.label}</div>`;
-    for (let i = 0; i < r.n; i++) {
+    const rondaBRACKET = {r32:BRACKET.r32,r16:BRACKET.r16,qf:BRACKET.qf,sf:BRACKET.sf,fin:BRACKET.final};
+    // Ordenar por fecha cronológica real, conservando el índice original (i) para las keys
+    const ordenIndices = Array.from({length: r.n}, (_, i) => i)
+      .sort((a, b) => {
+        const dtA = rondaBRACKET[r.prefix]?.[a]?.dt || '9999';
+        const dtB = rondaBRACKET[r.prefix]?.[b]?.dt || '9999';
+        return dtA.localeCompare(dtB);
+      });
+    ordenIndices.forEach(i => {
       const key = `${r.prefix}_${i}`;
       const real = resultadosReales[key] || {};
-      const rondaBRACKET = {r32:BRACKET.r32,r16:BRACKET.r16,qf:BRACKET.qf,sf:BRACKET.sf,fin:BRACKET.final};
       const bPartido = rondaBRACKET[r.prefix]?.[i];
       const tA = bPartido?.a || '';
       const tB = bPartido?.b || '';
+      const dtAdmin = bPartido?.dt ? fmtDT(bPartido.dt) : '';
       const labelTeams = tA && tB
         ? `${flagFor(tA)} ${tA} vs ${tB} ${flagFor(tB)}`
         : `Partido ${i+1}`;
@@ -1998,15 +2269,19 @@ function renderResultadosAdmin() {
       const penOptsAdmin = `<option value="">— ¿Quién gana? —</option>` +
         [tA, tB].filter(Boolean).map(e => `<option value="${e}">${flagFor(e)} ${e}</option>`).join('');
       html += `<div class="real-partido" style="flex-wrap:wrap;gap:6px" id="rp_${key}">
-        <span style="font-size:11px;color:var(--gris);width:100%">${labelTeams}</span>
+        <span style="font-size:11px;color:var(--gris);width:100%">
+          ${labelTeams}${dtAdmin?` <span style="color:var(--dorado);font-weight:600">· ${dtAdmin}</span>`:''}
+        </span>
         <div class="real-score-box">
           <input class="real-score-input" type="number" min="0" max="20"
             value="${vL}" placeholder="–"
-            oninput="setResultadoRealElim('${key}','gL',this.value,'${tA}','${tB}')">
+            oninput="setResultadoRealElim('${key}','gL',this.value,'${tA}','${tB}')"
+            style="border-color:${vL!==''?'var(--dorado)':'var(--borde)'}">
           <span style="color:var(--gris);font-size:13px;font-weight:700">:</span>
           <input class="real-score-input" type="number" min="0" max="20"
             value="${vV}" placeholder="–"
-            oninput="setResultadoRealElim('${key}','gV',this.value,'${tA}','${tB}')">
+            oninput="setResultadoRealElim('${key}','gV',this.value,'${tA}','${tB}')"
+            style="border-color:${vV!==''?'var(--dorado)':'var(--borde)'}">
         </div>
         <div id="pen_admin_${key}" style="${isTie?'':'display:none'};display:flex;align-items:center;gap:5px;flex:1 1 100%">
           <span style="font-size:10px;color:var(--dorado);font-weight:700">🥅 Penales:</span>
@@ -2015,7 +2290,7 @@ function renderResultadosAdmin() {
         </div>
         <span class="real-saved" id="saved_${key}">✅</span>
       </div>`;
-    }
+    });
     html += '</div>';
   });
 
@@ -2036,11 +2311,22 @@ function renderResultadosAdmin() {
       }
     }
   });
+
+  // Marco dorado: lo que viene de Firebase YA está guardado/confirmado
+  marcarResultadosGuardados();
 }
 
 // setResultadoReal para eliminatorias — muestra/oculta penales dinámicamente
 function setResultadoRealElim(key, field, val, tA, tB) {
   setResultadoReal(key, field, val);
+
+  // Quitar marco dorado al editar — solo vuelve a aparecer tras Guardar confirmado
+  const row = document.getElementById(`rp_${key}`);
+  if (row) {
+    const inputs = row.querySelectorAll('.real-score-input');
+    inputs.forEach(inp => inp.style.borderColor = 'var(--borde)');
+  }
+
   // Check if tie after updating
   const real = resultadosReales[key] || {};
   const vL = field === 'gL' ? val : (real.gL ?? '');
@@ -2065,9 +2351,25 @@ function setResultadoRealElim(key, field, val, tA, tB) {
 function setResultadoReal(key, field, val) {
   if (!resultadosReales[key]) resultadosReales[key] = {};
   resultadosReales[key][field] = val;
-  // Visual feedback — marca el campo como modificado
+  // Visual feedback — marca el campo como modificado (naranja = sin guardar)
   const btn = document.getElementById('btnGuardarResultados');
   if (btn) { btn.textContent = '💾 Guardar resultados *'; btn.style.background = '#ff9800'; btn.style.color='#000'; }
+  // Quitar marco dorado del input de Grupos también — vuelve hasta confirmar Guardar
+  const inputEl = document.querySelector(`[oninput*="'${key}'"][oninput*="'${field}'"]`);
+  if (inputEl) inputEl.style.borderColor = 'var(--borde)';
+}
+
+// Marca con dorado SOLO los campos que ya están confirmados en Firebase
+// (se llama después de un guardado exitoso)
+function marcarResultadosGuardados() {
+  document.querySelectorAll('.real-score-input').forEach(inp => {
+    const onInput = inp.getAttribute('oninput') || '';
+    const m = onInput.match(/^set\w+\('([^']+)','([^']+)'/);
+    if (!m) return;
+    const [, key, field] = m;
+    const val = resultadosReales[key]?.[field];
+    inp.style.borderColor = (val !== undefined && val !== '') ? 'var(--dorado)' : 'var(--borde)';
+  });
 }
 
 
@@ -2213,6 +2515,7 @@ async function propagarBracket() {
     };
     if (window._fb?.guardarBracket) await window._fb.guardarBracket(bracketData);
     renderEliminatorias();
+    if (typeof renderBracketVisual === 'function') renderBracketVisual();
     if (changed) showToast('⚽ Bracket actualizado');
   } catch(e) {
     console.error('Error guardando bracket:', e);
@@ -2250,6 +2553,7 @@ async function guardarResultadosManual() {
   try {
     await window._fb.guardarResultados(resultadosReales);
     await propagarBracket(); // auto-propagar ganadores al siguiente slot
+    marcarResultadosGuardados(); // marco dorado SOLO en lo confirmado
     if (btn) { btn.textContent = '✅ Guardado'; btn.style.background='var(--verde)'; btn.style.color='#000'; btn.disabled = false; }
     setTimeout(() => {
       if (btn) { btn.textContent = '💾 Guardar resultados'; btn.style.background='var(--verde)'; }
