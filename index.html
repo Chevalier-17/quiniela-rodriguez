@@ -1476,8 +1476,12 @@ function renderRondaElim(gridId, partidos, prefix) {
     const vPen= state[kPen]?? '';
 
     // Determine if teams are fixed (r32) or open
-    const teamAFixed = p.a || null;
-    const teamBFixed = p.b || null;
+    // IMPORTANTE: siempre leer del objeto BRACKET en vivo (no de p.a/p.b)
+    // porque la propagación actualiza BRACKET.sf[i].a después del render inicial
+    const rondaMapLive = {r32:BRACKET.r32, r16:BRACKET.r16, qf:BRACKET.qf, sf:BRACKET.sf, fin:BRACKET.final};
+    const pLive = rondaMapLive[prefix]?.[i];
+    const teamAFixed = pLive?.a || null;
+    const teamBFixed = pLive?.b || null;
     const currentA = teamAFixed || state[`${prefix_i}_1`] || '';
     const currentB = teamBFixed || state[`${prefix_i}_2`] || '';
 
@@ -1611,8 +1615,13 @@ function setElimScoreNew(kC, kO, bid, penId, val, otherIsLocal, prefix_i) {
 
   // Update penalty dropdown options to match current teams
   if (isTie && penDiv) {
-    const currentA = state[`${prefix_i}_1`] || BRACKET.r32.find((_,ii) => `r32_${ii}` === prefix_i)?.a || '';
-    const currentB = state[`${prefix_i}_2`] || BRACKET.r32.find((_,ii) => `r32_${ii}` === prefix_i)?.b || '';
+    // Buscar equipos en el BRACKET correcto según el prefix de este partido
+    const rondaMapElim = {r32:BRACKET.r32, r16:BRACKET.r16, qf:BRACKET.qf, sf:BRACKET.sf, fin:BRACKET.final};
+    const pfx = prefix_i.split('_')[0]; // ej. 'sf' de 'sf_0'
+    const idx = parseInt(prefix_i.split('_')[1]); // ej. 0 de 'sf_0'
+    const bPartido = rondaMapElim[pfx]?.[idx];
+    const currentA = bPartido?.a || state[`${prefix_i}_1`] || '';
+    const currentB = bPartido?.b || state[`${prefix_i}_2`] || '';
     const penSel = penDiv.querySelector('select');
     if (penSel) {
       const prevVal = state[`${prefix_i}_pen`] || '';
